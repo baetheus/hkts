@@ -1,6 +1,6 @@
 {
   "name": "@nll/hkts",
-  "version": "7.1.2",
+  "version": "0.0.0",
   "description": "A tiny higher kinded type library",
   "main": "lib/index.js",
   "module": "es6/index.js",
