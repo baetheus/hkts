@@ -1,44 +1,58 @@
 import * as assert from 'assert';
 
-import { ap, chain, constNone, fold, getOrElse, isNone, isSome, join, map, none, of, some } from '../src/maybe';
-import { compose } from '../src/static-land-curried';
+import {
+  ap,
+  chain,
+  constNone,
+  fold,
+  getOrElse,
+  isNone,
+  isSome,
+  join,
+  map,
+  none,
+  of,
+  some,
+  TagNone,
+  TagSome,
+} from '../src/maybe';
+import { compose } from '../src/utilities';
 
 const addOne = (n: number) => n + 1;
 
 const someAddOne = some(addOne);
 const someNumber = some(2);
-const aNone = none;
 
 describe('maybe', () => {
   it('ap', () => {
     assert.deepStrictEqual(ap(someAddOne)(someNumber), some(3));
-    assert.deepStrictEqual(ap(someAddOne)(aNone), none);
+    assert.deepStrictEqual(ap(someAddOne)(none), none);
   });
 
   it('chain', () => {
     const addOneChain = compose(addOne)(of);
     assert.deepStrictEqual(chain(addOneChain)(someNumber), some(3));
-    assert.deepStrictEqual(chain(addOneChain)(aNone), none);
+    assert.deepStrictEqual(chain(addOneChain)(none), none);
   });
 
   it('fold', () => {
-    const onSome = addOne;
-    const onNone = () => 100;
-    assert.deepStrictEqual(fold(onSome, onNone)(someNumber), 3);
-    assert.deepStrictEqual(fold(onSome, onNone)(aNone), 100);
+    const Some = addOne;
+    const None = () => 100;
+    assert.deepStrictEqual(fold({ Some, None })(someNumber), 3);
+    assert.deepStrictEqual(fold({ Some, None })(none), 100);
   });
 
   it('getOrElse', () => {
     assert.deepStrictEqual(getOrElse(() => 100)(someNumber), 2);
-    assert.deepStrictEqual(getOrElse(() => 100)(aNone), 100);
+    assert.deepStrictEqual(getOrElse(() => 100)(none), 100);
   });
 
   it('some', () => {
-    assert.deepStrictEqual(some(3), { tag: 'Some', value: 3 });
+    assert.deepStrictEqual(some(3), { tag: TagSome, value: 3 });
   });
 
   it('none', () => {
-    assert.deepStrictEqual(none, { tag: 'None' });
+    assert.deepStrictEqual(none, { tag: TagNone });
   });
 
   it('constNone', () => {
@@ -47,12 +61,12 @@ describe('maybe', () => {
 
   it('isSome', () => {
     assert.deepStrictEqual(isSome(someNumber), true);
-    assert.deepStrictEqual(isSome(aNone), false);
+    assert.deepStrictEqual(isSome(none), false);
   });
 
   it('isNone', () => {
     assert.deepStrictEqual(isNone(someNumber), false);
-    assert.deepStrictEqual(isNone(aNone), true);
+    assert.deepStrictEqual(isNone(none), true);
   });
 
   it('join', () => {
@@ -63,6 +77,6 @@ describe('maybe', () => {
 
   it('map', () => {
     assert.deepStrictEqual(map(addOne)(someNumber), some(3));
-    assert.deepStrictEqual(map(addOne)(aNone), none);
+    assert.deepStrictEqual(map(addOne)(none), none);
   });
 });

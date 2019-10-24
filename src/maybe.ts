@@ -1,5 +1,6 @@
 import { _ } from './hkts';
-import { identity, monad, Show } from './static-land-curried';
+import { Alternative, Foldable, monad, Monad, Show, Traversable } from './static-land';
+import { identity } from './utilities';
 
 /**
  * Tags
@@ -30,24 +31,26 @@ export const isSome = <A>(m: Maybe<A>): m is Some<A> => m.tag === TagSome;
 /**
  * Utilities
  */
-export const fold = <A, B>(onSome: (a: A) => B, onNone: () => B) => (
-  m: Maybe<A>
-): B => {
+export const fold = <A, B>(cs: {
+  [TagNone]: () => B;
+  [TagSome]: (a: A) => B;
+}) => (m: Maybe<A>): B => {
   switch (m.tag) {
     case TagSome:
-      return onSome(m.value);
+      return cs[TagSome](m.value);
     case TagNone:
-      return onNone();
+      return cs[TagNone]();
   }
 };
 
-export const getOrElse = <B>(b: () => B) => fold<B, B>(identity, b);
+export const getOrElse = <B>(onNone: () => B) =>
+  fold<B, B>({ [TagSome]: identity, [TagNone]: onNone });
 
 /**
  * Show
  */
-export const getShow = <A>(S: Show<A>): Show<Maybe<A>> => ({
-  show: ma => (isNone(ma) ? TagNone : `${TagSome}(${S.show(ma.value)})`),
+export const getShow = <A>({ show }: Show<A>): Show<Maybe<A>> => ({
+  show: ma => (isNone(ma) ? TagNone : `${TagSome}(${show(ma.value)})`),
 });
 
 /**
@@ -55,5 +58,52 @@ export const getShow = <A>(S: Show<A>): Show<Maybe<A>> => ({
  */
 export const { ap, map, chain, join, of } = monad<Maybe<_>>({
   of: some,
-  chain: f => fold(f, constNone),
+  chain: famb => fold({ [TagSome]: famb, [TagNone]: constNone }),
 });
+
+/**
+ * Alternative
+ */
+export const { zero, alt }: Alternative<Maybe<_>> = {
+  map,
+  ap,
+  of,
+  zero: constNone,
+  alt: a => b => (isSome(a) ? a : b),
+};
+
+/**
+ * Traversable
+ *
+ */
+export const { traverse }: Traversable<Maybe<_>> = {
+  traverse: <F>(F: Applicative<F>) => <A>(ma: Maybe<A>) => <B>(
+    f: (a: A) => $<F, [B]>
+  ): $<F, [Maybe<B>]> => (isNone(ma) ? F.of(none) : F.map(f(ma.value))(some)),
+};
+
+/**
+ * Foldable
+ * (fa, b, f) => (isNone(fa) ? b : f(b, fa.value)),
+ */
+export const { reduce }: Foldable<Maybe<_>> = {
+  reduce: fa => b => f => (isSome(fa) ? f(b)(fa.value) : b),
+};
+
+/**
+ * Maybe
+ */
+export const maybe: Alternative<Maybe<_>> &
+  Monad<Maybe<_>> &
+  Foldable<Maybe<_>> &
+  Traversable<Maybe<_>> = {
+  map,
+  ap,
+  of,
+  zero,
+  alt,
+  chain,
+  join,
+  traverse,
+  reduce,
+};

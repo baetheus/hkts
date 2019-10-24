@@ -1,4 +1,5 @@
 import { $, _ } from './hkts';
+import { compose, flip, identity } from './utilities';
 
 /**
  * Types
@@ -8,15 +9,15 @@ export interface Show<T> {
 }
 
 export interface Setoid<T> {
-  equals: (x: T, y: T) => boolean;
+  equals: (x: T) => (y: T) => boolean;
 }
 
 export interface Ord<T> extends Setoid<T> {
-  lte: (x: T, y: T) => boolean;
+  lte: (x: T) => (y: T) => boolean;
 }
 
 export interface Semigroup<T> {
-  concat: (x: T, y: T) => T;
+  concat: (x: T) => (y: T) => T;
 }
 
 export interface Monoid<T> extends Semigroup<T> {
@@ -44,10 +45,9 @@ export interface Functor<T> {
 }
 
 export interface Bifunctor<T> {
-  bimap: <A, B, C, D>(
-    f: (x: A) => B,
-    g: (x: C) => D
-  ) => (t: $<T, [A, C]>) => $<T, [B, D]>;
+  bimap: <A, B>(
+    f: (x: A) => B
+  ) => <C, D>(g: (x: C) => D) => (t: $<T, [A, C]>) => $<T, [B, D]>;
   first: <A, B>(t: $<T, [A, B]>) => Functor<$<T, [_, B]>>;
   second: <A, B>(t: $<T, [A, B]>) => Functor<$<T, [A, _]>>;
 }
@@ -57,10 +57,9 @@ export interface Contravariant<T> {
 }
 
 export interface Profunctor<T> {
-  promap: <A, B, C, D>(
-    f: (x: A) => B,
-    g: (x: C) => D
-  ) => (t: $<T, [B, C]>) => $<T, [A, D]>;
+  promap: <A, B>(
+    f: (x: A) => B
+  ) => <C, D>(g: (x: C) => D) => (t: $<T, [B, C]>) => $<T, [A, D]>;
 }
 
 export interface Apply<T> extends Functor<T> {
@@ -90,7 +89,7 @@ export interface Monad<T> extends Applicative<T>, Chain<T> {
 }
 
 export interface Foldable<T> {
-  reduce: <A, B>(f: (x: A, y: B) => A, x: A) => (u: $<T, [B]>) => A;
+  reduce: <A, B>(f: (x: A) => (y: B) => A) => (x: A) => (u: $<T, [B]>) => A;
 }
 
 export interface Extend<T> extends Functor<T> {
@@ -103,21 +102,9 @@ export interface Comonad<T> extends Extend<T> {
 
 export interface Traversable<T> extends Functor<T>, Foldable<T> {
   traverse: <U, A, B>(
-    a: Applicative<U>,
-    f: (x: A) => $<U, [B]>
-  ) => (t: $<T, [A]>) => $<U, [$<T, [B]>]>;
+    a: Applicative<U>
+  ) => (f: (x: A) => $<U, [B]>) => (t: $<T, [A]>) => $<U, [$<T, [B]>]>;
 }
-
-/**
- * Utilities
- */
-export const identity = <A>(a: A): A => a;
-export const flip = <A, B, C>(f: (a: A) => (b: B) => C) => (b: B) => (
-  a: A
-): C => f(a)(b);
-export const compose = <A, B>(fab: (a: A) => B) => <C>(fbc: (b: B) => C) => (
-  a: A
-): C => fbc(fab(a));
 
 /**
  * Implementation
@@ -129,10 +116,10 @@ export const bifunctor = <T>({
 }: Pick<Bifunctor<T>, 'bimap'>): Bifunctor<T> => ({
   bimap,
   first: _ => ({
-    map: f => bimap(f, identity),
+    map: f => bimap(f)(identity),
   }),
   second: _ => ({
-    map: f => bimap(identity, f),
+    map: f => bimap(identity)(f),
   }),
 });
 

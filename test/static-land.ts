@@ -1,7 +1,7 @@
 import { _, _0, _1 } from '../src/hkts';
 import * as maybe from '../src/maybe';
 import { pipe } from '../src/pipe';
-import { bifunctor, monad } from '../src/static-land-curried';
+import { bifunctor, monad } from '../src/static-land';
 
 /** Utilities */
 const addOne = (n: number) => n + 1;
