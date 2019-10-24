@@ -108,5 +108,3 @@ type TupleTable<T extends any[] = any, S extends any[] = any> = {
       $<A0, S>, $<A1, S>, $<A2, S>, $<A3, S>, $<A4, S>, $<A5, S>, $<A6, S>, $<A7, S>, $<A8, S>, $<A9, S>
     ] : never
 }
-
-export * from './static-land';

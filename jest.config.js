@@ -1,15 +1,19 @@
 module.exports = {
-  clearMocks: true,
-  coverageDirectory: 'coverage',
-  globals: {
-    'ts-jest': {
-      tsConfigFile: 'tsconfig.json',
-    },
-  },
-  moduleFileExtensions: ['ts', 'tsx', 'js'],
+  preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['<rootDir>/src/**/*.spec.ts'],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
+    '^.+\\.tsx?$': 'ts-jest',
+  },
+  testRegex: 'test',
+  moduleFileExtensions: ['ts', 'js'],
+  collectCoverage: true,
+  collectCoverageFrom: ['src/**/*.ts'],
+  coverageThreshold: {
+    global: {
+      branches: 100,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
   },
 };

@@ -1,8 +1,7 @@
 language: node_js
 node_js:
-  - node
-cache: yarn
+  - '10'
 script:
-  - yarn test
-  - yarn format
-after_success: cat ./coverage/lcov.info | ./node_modules/.bin/coveralls
+  - npm test
+  - npm run coveralls
+  - npm run build

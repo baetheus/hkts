@@ -1,3 +1,12 @@
-coverage
+# build
 lib
+es6
+
+# deps
 node_modules
+
+# ide
+.vscode
+
+# tests
+coverage
