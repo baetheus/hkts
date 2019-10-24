@@ -22,21 +22,6 @@ export const isNone = <A>(m: Maybe<A>): m is None => m.tag === 'None';
 export const isSome = <A>(m: Maybe<A>): m is Some<A> => m.tag === 'Some';
 
 /**
- * Monad
- */
-export const { ap, map, chain, join, of } = monad<Maybe<_>>({
-  of: some,
-  chain: f => m => {
-    switch (m.tag) {
-      case 'Some':
-        return f(m.value);
-      case 'None':
-        return m;
-    }
-  },
-});
-
-/**
  * Utilities
  */
 export const fold = <A, B>(onSome: (a: A) => B, onNone: () => B) => (
@@ -49,5 +34,13 @@ export const fold = <A, B>(onSome: (a: A) => B, onNone: () => B) => (
       return onNone();
   }
 };
+
+/**
+ * Monad
+ */
+export const { ap, map, chain, join, of } = monad<Maybe<_>>({
+  of: some,
+  chain: f => fold(f, constNone),
+});
 
 export const getOrElse = <B>(b: () => B) => fold<B, B>(identity, b);
