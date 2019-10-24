@@ -3,6 +3,10 @@ import { $, _ } from './hkts';
 /**
  * Types
  */
+export interface Show<T> {
+  show: (t: T) => string;
+}
+
 export interface Setoid<T> {
   equals: (x: T, y: T) => boolean;
 }
@@ -40,7 +44,10 @@ export interface Functor<T> {
 }
 
 export interface Bifunctor<T> {
-  bimap: <A, B, C, D>(f: (x: A) => B, g: (x: C) => D) => (t: $<T, [A, C]>) => $<T, [B, D]>;
+  bimap: <A, B, C, D>(
+    f: (x: A) => B,
+    g: (x: C) => D
+  ) => (t: $<T, [A, C]>) => $<T, [B, D]>;
   first: <A, B>(t: $<T, [A, B]>) => Functor<$<T, [_, B]>>;
   second: <A, B>(t: $<T, [A, B]>) => Functor<$<T, [A, _]>>;
 }
@@ -50,7 +57,10 @@ export interface Contravariant<T> {
 }
 
 export interface Profunctor<T> {
-  promap: <A, B, C, D>(f: (x: A) => B, g: (x: C) => D) => (t: $<T, [B, C]>) => $<T, [A, D]>;
+  promap: <A, B, C, D>(
+    f: (x: A) => B,
+    g: (x: C) => D
+  ) => (t: $<T, [B, C]>) => $<T, [A, D]>;
 }
 
 export interface Apply<T> extends Functor<T> {
@@ -94,7 +104,7 @@ export interface Comonad<T> extends Extend<T> {
 export interface Traversable<T> extends Functor<T>, Foldable<T> {
   traverse: <U, A, B>(
     a: Applicative<U>,
-    f: (x: A) => $<U, [B]>,
+    f: (x: A) => $<U, [B]>
   ) => (t: $<T, [A]>) => $<U, [$<T, [B]>]>;
 }
 
@@ -102,16 +112,21 @@ export interface Traversable<T> extends Functor<T>, Foldable<T> {
  * Utilities
  */
 export const identity = <A>(a: A): A => a;
-export const flip = <A, B, C>(f: (a: A) => (b: B) => C) => (b: B) => (a: A): C => f(a)(b);
-export const compose = <A, B>(fab: (a: A) => B) => <C>(fbc: (b: B) => C) => (a: A): C =>
-  fbc(fab(a));
+export const flip = <A, B, C>(f: (a: A) => (b: B) => C) => (b: B) => (
+  a: A
+): C => f(a)(b);
+export const compose = <A, B>(fab: (a: A) => B) => <C>(fbc: (b: B) => C) => (
+  a: A
+): C => fbc(fab(a));
 
 /**
  * Implementation
  */
 export const functor = <T>(spec: Functor<T>) => spec;
 
-export const bifunctor = <T>({ bimap }: Pick<Bifunctor<T>, 'bimap'>): Bifunctor<T> => ({
+export const bifunctor = <T>({
+  bimap,
+}: Pick<Bifunctor<T>, 'bimap'>): Bifunctor<T> => ({
   bimap,
   first: _ => ({
     map: f => bimap(f, identity),
@@ -121,7 +136,10 @@ export const bifunctor = <T>({ bimap }: Pick<Bifunctor<T>, 'bimap'>): Bifunctor<
   }),
 });
 
-export const applicative = <T>({ of, ap }: Pick<Applicative<T>, 'ap' | 'of'>): Applicative<T> => ({
+export const applicative = <T>({
+  of,
+  ap,
+}: Pick<Applicative<T>, 'ap' | 'of'>): Applicative<T> => ({
   of,
   ap,
   map: compose(of)(ap),
