@@ -1,4 +1,9 @@
 /**
+ * Utility Types
+ */
+export type Fn<AS extends unknown[], B> = (...as: AS) => B;
+
+/**
  * Utility Functions
  */
 export const identity = <A>(a: A): A => a;

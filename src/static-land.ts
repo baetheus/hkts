@@ -1,28 +1,27 @@
+import { compose, flip, identity } from "./fns";
 import { $ } from "./hkts";
 
 /**
  * Static Land Interfaces
  */
 export interface Alt<T> extends Functor<T> {
-  alt: <A>(x: $<T, [A]>, y: $<T, [A]>) => $<T, [A]>;
+  alt: <A>(ta: $<T, [A]>) => (tb: $<T, [A]>) => $<T, [A]>;
 }
 
 export interface Alternative<T> extends Applicative<T>, Plus<T> {}
 
 export interface Applicative<T> extends Apply<T> {
-  of: <A>(x: A) => $<T, [A]>;
+  of: <A>(a: A) => $<T, [A]>;
 }
 
 export interface Apply<T> extends Functor<T> {
-  ap: <A, B>(tf: $<T, [(x: A) => B]>, ta: $<T, [A]>) => $<T, [B]>;
+  ap: <A, B>(tfab: $<T, [(a: A) => B]>) => (ta: $<T, [A]>) => $<T, [B]>;
 }
 
 export interface Bifunctor<T> {
   bimap: <A, B, C, D>(
-    f: (x: A) => B,
-    g: (x: C) => D,
-    t: $<T, [A, C]>
-  ) => $<T, [B, D]>;
+    fab: (a: A) => B
+  ) => (fcd: (c: C) => D) => (tac: $<T, [A, C]>) => $<T, [B, D]>;
 }
 
 export interface Category<T> extends Semigroupoid<T> {
@@ -30,30 +29,31 @@ export interface Category<T> extends Semigroupoid<T> {
 }
 
 export interface Chain<T> extends Apply<T> {
-  chain: <A, B>(f: (x: A) => $<T, [B]>, t: $<T, [A]>) => $<T, [B]>;
+  chain: <A, B>(fatb: (a: A) => $<T, [B]>) => (ta: $<T, [A]>) => $<T, [B]>;
 }
 
 export interface Comonad<T> extends Extend<T> {
-  extract: <a>(t: $<T, [a]>) => a;
+  extract: <a>(ta: $<T, [a]>) => a;
 }
 
 export interface Contravariant<T> {
-  contramap: <A, B>(f: (x: A) => B, t: $<T, [B]>) => $<T, [A]>;
+  contramap: <A, B>(fab: (a: A) => B) => (tb: $<T, [B]>) => $<T, [A]>;
 }
 
 export interface Extend<T> extends Functor<T> {
-  extend: <A, B>(f: (t: $<T, [A]>) => B, t: $<T, [A]>) => $<T, [B]>;
+  extend: <A, B>(ftab: (t: $<T, [A]>) => B) => (ta: $<T, [A]>) => $<T, [B]>;
 }
 
 export interface Filterable<T> {
-  filter: <A>(pred: (x: A) => boolean, ta: $<T, [A]>) => $<T, [A]>;
+  filter: <A>(predicate: (x: A) => boolean) => (ta: $<T, [A]>) => $<T, [A]>;
 }
 
 export interface Foldable<T> {
-  reduce: <A, B>(f: (x: A, y: B) => A, x: A, u: $<T, [B]>) => A;
+  reduce: <A, B>(faba: (a: A, b: B) => A) => (a: A) => (tb: $<T, [B]>) => A;
 }
+
 export interface Functor<T> {
-  map: <A, B>(f: (x: A) => B, t: $<T, [A]>) => $<T, [B]>;
+  map: <A, B>(fab: (a: A) => B) => (ta: $<T, [A]>) => $<T, [B]>;
 }
 
 export interface Group<T> extends Monoid<T> {
@@ -61,7 +61,7 @@ export interface Group<T> extends Monoid<T> {
 }
 
 export interface Monad<T> extends Applicative<T>, Chain<T> {
-  join: <A>(tt: $<T, [$<T, [A]>]>) => $<T, [A]>;
+  join: <A>(tta: $<T, [$<T, [A]>]>) => $<T, [A]>;
 }
 
 export interface Monoid<T> extends Semigroup<T> {
@@ -69,7 +69,7 @@ export interface Monoid<T> extends Semigroup<T> {
 }
 
 export interface Ord<T> extends Setoid<T> {
-  lte: (x: T, y: T) => boolean;
+  lte: (a: T, b: T) => boolean;
 }
 
 export interface Plus<T> extends Alt<T> {
@@ -78,58 +78,71 @@ export interface Plus<T> extends Alt<T> {
 
 export interface Profunctor<T> {
   promap: <A, B, C, D>(
-    f: (x: A) => B,
-    g: (x: C) => D,
-    t: $<T, [B, C]>
-  ) => $<T, [A, D]>;
+    fab: (x: A) => B
+  ) => (fcd: (x: C) => D) => (tbc: $<T, [B, C]>) => $<T, [A, D]>;
 }
 
 export interface Semigroup<T> {
-  concat: (x: T, y: T) => T;
+  concat: (a: T) => (b: T) => T;
 }
 
 export interface Semigroupoid<T> {
-  compose: <I, J, K>(tij: $<T, [I, J]>, tjk: $<T, [J, K]>) => $<T, [I, K]>;
+  compose: <I, J, K>(tij: $<T, [I, J]>) => (tjk: $<T, [J, K]>) => $<T, [I, K]>;
 }
 
 export interface Setoid<T> {
-  equals: (x: T, y: T) => boolean;
+  equals: (a: T, b: T) => boolean;
+}
+
+export interface Show<T> {
+  show: (t: T) => string;
 }
 
 export interface Traversable<T> extends Functor<T>, Foldable<T> {
   traverse: <U, A, B>(
-    a: Applicative<U>,
-    f: (x: A) => $<U, [B]>,
-    t: $<T, [A]>
-  ) => $<U, [$<T, [B]>]>;
+    au: Applicative<U>
+  ) => (faub: (x: A) => $<U, [B]>) => (ta: $<T, [A]>) => $<U, [$<T, [B]>]>;
 }
 
 /**
  * Implementations
  */
 
-export const applicative = <T>(
-  spec: Pick<Applicative<T>, "ap" | "of">
-): Applicative<T> & Functor<T> => ({
-  ...spec,
-  map: (f, u) => spec.ap(spec.of(f), u),
-});
-
-export const chain = <T>(spec: Pick<Chain<T>, "chain" | "map">): Chain<T> => ({
-  ...spec,
-  ap: (uf, ux) => spec.chain((f) => spec.map(f, ux), uf),
-});
-
-export const functor = <T>(spec: Functor<T>) => spec;
-
-export const monad = <T>({
+/**
+ * Derives map from ap and of.
+ */
+export const createApplicative = <T>({
+  ap,
   of,
-  chain: _chain,
+}: Pick<Applicative<T>, "ap" | "of">): Applicative<T> => ({
+  ap,
+  of,
+  map: (f) => ap(of(f)),
+});
+
+/**
+ * Derives ap from map and chain.
+ */
+export const createChain = <T>({
+  chain,
+  map,
+}: Pick<Chain<T>, "chain" | "map">): Chain<T> => ({
+  chain,
+  map,
+  ap: flip((ta) => chain(flip(map)(ta))),
+});
+
+/**
+ * Derives join and map from of and chain.
+ */
+export const createMonad = <T>({
+  of,
+  chain,
 }: Pick<Monad<T>, "of" | "chain">): Monad<T> => ({
   of,
-  join: (tt) => _chain((t) => t, tt),
-  ...chain({
-    chain: _chain,
-    map: (f, t) => _chain((x) => of(f(x)), t),
+  join: chain(identity),
+  ...createChain({
+    chain,
+    map: (fab) => chain(compose(fab)(of)),
   }),
 });

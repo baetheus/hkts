@@ -21,11 +21,11 @@ export interface Fixed<T> {
  * Substitution Type
  */
 // prettier-ignore
-export type $<T, S extends any[]> = (
+export type $<T, S extends unknown[]> = (
   T extends _<infer N> ? S[N] :
   T extends Fixed<infer U> ? U :
   T extends object ? { [K in keyof T]: $<T[K], S> } :
-  T extends any[] ? { [K in keyof T]: $<T[K], S> } :
+  T extends unknown[] ? { [K in keyof T]: $<T[K], S> } :
   T extends undefined | null | boolean | string | number ? T :
   T extends (...x: infer I) => infer O ? (...x: $<I, S>) => $<O, S> :
   T
