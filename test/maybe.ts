@@ -1,98 +1,80 @@
 import * as assert from "assert";
 import { compose } from "../src/fns";
-import {
-  alt,
-  ap,
-  chain,
-  constNone,
-  fold,
-  getOrElse,
-  getShow,
-  isNone,
-  isSome,
-  join,
-  map,
-  none,
-  of,
-  some,
-  TagNone,
-  TagSome,
-} from "../src/maybe";
+import * as M from "../src/maybe";
 
 const addOne = (n: number) => n + 1;
-
-const someAddOne = some(addOne);
-const someNumber = some(2);
-const someOtherNumber = some(3);
+const someAddOne = M.some(addOne);
+const someNumber = M.some(2);
+const someOtherNumber = M.some(3);
+const onSome = addOne;
+const onNone = () => 100;
 
 describe("maybe", () => {
   it("ap", () => {
-    assert.deepStrictEqual(ap(someAddOne)(someNumber), some(3));
-    assert.deepStrictEqual(ap(someAddOne)(none), none);
+    assert.deepStrictEqual(M.ap(someAddOne, someNumber), M.some(3));
+    assert.deepStrictEqual(M.ap(someAddOne, M.none), M.none);
   });
 
   it("chain", () => {
-    const addOneChain = compose(addOne)(of);
-    assert.deepStrictEqual(chain(addOneChain)(someNumber), some(3));
-    assert.deepStrictEqual(chain(addOneChain)(none), none);
+    const addOneChain = compose(addOne)(M.of);
+    assert.deepStrictEqual(M.chain(addOneChain, someNumber), M.some(3));
+    assert.deepStrictEqual(M.chain(addOneChain, M.none), M.none);
   });
 
   it("fold", () => {
-    const Some = addOne;
-    const None = () => 100;
-    assert.deepStrictEqual(fold({ Some, None })(someNumber), 3);
-    assert.deepStrictEqual(fold({ Some, None })(none), 100);
+    assert.deepStrictEqual(M.fold(onSome, onNone, someNumber), 3);
+    assert.deepStrictEqual(M.fold(onSome, onNone, M.none), 100);
   });
 
   it("getOrElse", () => {
-    assert.deepStrictEqual(getOrElse(() => 100)(someNumber), 2);
-    assert.deepStrictEqual(getOrElse(() => 100)(none), 100);
+    assert.deepStrictEqual(M.getOrElse(onNone, someNumber), 2);
+    assert.deepStrictEqual(M.getOrElse(onNone, M.none), 100);
   });
 
   it("some", () => {
-    assert.deepStrictEqual(some(3), { tag: TagSome, value: 3 });
+    assert.deepStrictEqual(M.some(3), { tag: "Some", value: 3 });
   });
 
   it("none", () => {
-    assert.deepStrictEqual(none, { tag: TagNone });
+    assert.deepStrictEqual(M.none, { tag: "None" });
   });
 
   it("constNone", () => {
-    assert.deepStrictEqual(constNone(), none);
+    assert.deepStrictEqual(M.constNone(), M.none);
   });
 
   it("isSome", () => {
-    assert.deepStrictEqual(isSome(someNumber), true);
-    assert.deepStrictEqual(isSome(none), false);
+    assert.deepStrictEqual(M.isSome(someNumber), true);
+    assert.deepStrictEqual(M.isSome(M.none), false);
   });
 
   it("isNone", () => {
-    assert.deepStrictEqual(isNone(someNumber), false);
-    assert.deepStrictEqual(isNone(none), true);
+    assert.deepStrictEqual(M.isNone(someNumber), false);
+    assert.deepStrictEqual(M.isNone(M.none), true);
   });
 
   it("join", () => {
-    assert.deepStrictEqual(join(some(some(3))), some(3));
-    assert.deepStrictEqual(join(some(none)), none);
-    assert.deepStrictEqual(join(none), none);
+    assert.deepStrictEqual(M.join(M.some(M.some(3))), M.some(3));
+    assert.deepStrictEqual(M.join(M.some(M.none)), M.none);
+    assert.deepStrictEqual(M.join(M.none), M.none);
   });
 
   it("map", () => {
-    assert.deepStrictEqual(map(addOne)(someNumber), some(3));
-    assert.deepStrictEqual(map(addOne)(none), none);
+    assert.deepStrictEqual(M.map(addOne, someNumber), M.some(3));
+    assert.deepStrictEqual(M.map(addOne, M.none), M.none);
   });
 
   it("show", () => {
-    const { show } = getShow({ show: (n: number) => n.toString() });
+    const { show } = M.getShow({ show: (n: number) => n.toString() });
 
     assert.deepStrictEqual(show(someNumber), "Some(2)");
-    assert.deepStrictEqual(show(none), "None");
+    assert.deepStrictEqual(show(M.none), "None");
   });
 
   it("alt", () => {
-    assert.deepStrictEqual(alt(someNumber)(someOtherNumber), someNumber);
-    assert.deepStrictEqual(alt(someNumber)(none), someNumber);
-    assert.deepStrictEqual(alt<number>(none)(someOtherNumber), someOtherNumber);
-    assert.deepStrictEqual(alt(none)(none), none);
+    assert.deepStrictEqual(M.alt(someNumber, someOtherNumber), someNumber);
+    assert.deepStrictEqual(M.alt(someNumber, M.none), someNumber);
+    assert.deepStrictEqual(M.alt(M.none, someOtherNumber), someOtherNumber);
+    assert.deepStrictEqual(M.alt(M.none, M.none), M.none);
   });
 });
