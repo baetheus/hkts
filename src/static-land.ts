@@ -1,4 +1,3 @@
-import { identity } from "./fns";
 import { $ } from "./hkts";
 
 /**
@@ -249,12 +248,12 @@ export const createChain = <T>({
  */
 export const createMonad = <T>({
   of,
-  chain,
-}: Pick<Applicative<T>, "of"> & Pick<Chain<T>, "chain">): Monad<T> => ({
+  map,
+  join,
+}: Pick<Monad<T>, "of" | "join" | "map">): Monad<T> => ({
   of,
-  join: (tta) => chain(identity, tta),
-  ...createChain({
-    chain,
-    map: (fab, ta) => chain((a) => of(fab(a)), ta),
-  }),
+  map,
+  join,
+  ap: (tfab, ta) => join(map((a) => map((fab) => fab(a), tfab), ta)),
+  chain: (fatb, ta) => join(map(fatb, ta)),
 });

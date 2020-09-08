@@ -1,14 +1,6 @@
-import { identity } from "./fns";
+import { compose, identity } from "./fns";
 import { $, _ } from "./hkts";
-import {
-  Alternative,
-  Applicative,
-  createMonad,
-  Foldable,
-  Monad,
-  Show,
-  Traversable,
-} from "./static-land";
+import * as SL from "./static-land";
 
 /**
  * Types
@@ -52,31 +44,34 @@ export const getOrElse = <B>(onNone: () => B, ta: Maybe<B>): B =>
 /**
  * Show
  */
-export const getShow = <A>({ show }: Show<A>): Show<Maybe<A>> => ({
+export const getShow = <A>({ show }: SL.Show<A>): SL.Show<Maybe<A>> => ({
   show: (ma) => (isNone(ma) ? "None" : `${"Some"}(${show(ma.value)})`),
 });
 
 /**
  * Monad
  */
-export const { ap, map, chain, join, of } = createMonad<Maybe<_>>({
+export const { ap, map, chain, join, of } = SL.createMonad<Maybe<_>>({
   of: some,
-  chain: <A, B>(famb: (a: A) => Maybe<B>, ta: Maybe<A>): Maybe<B> =>
-    fold(famb, constNone, ta),
+  map: (fab, ta) => fold(compose(fab)(some), constNone, ta),
+  join: (tta) => (isNone(tta) ? tta : tta.value),
 });
 
 /**
  * Alternative
  */
-export const { zero, alt }: Pick<Alternative<Maybe<_>>, "zero" | "alt"> = {
+export const { zero, alt }: SL.Alternative<Maybe<_>> = {
   zero: constNone,
   alt: (a, b) => (isSome(a) ? a : b),
+  ap,
+  map,
+  of,
 };
 
 /**
  * Foldable
  */
-export const { reduce }: Foldable<Maybe<_>> = {
+export const { reduce }: SL.Foldable<Maybe<_>> = {
   reduce: <A, B>(faba: (a: A, b: B) => A, a: A, tb: Maybe<B>): A =>
     isSome(tb) ? faba(a, tb.value) : a,
 };
@@ -84,29 +79,31 @@ export const { reduce }: Foldable<Maybe<_>> = {
 /**
  * Traversable
  */
-export const { traverse }: Pick<Traversable<Maybe<_>>, "traverse"> = {
+export const { traverse }: SL.Traversable<Maybe<_>> = {
   traverse: <U, A, B>(
-    F: Applicative<U>,
+    F: SL.Applicative<U>,
     faub: (x: A) => $<U, [B]>,
     ta: Maybe<A>
   ): $<U, [Maybe<B>]> =>
     isNone(ta) ? F.of(none) : F.map(some, faub(ta.value)),
+  map,
+  reduce,
 };
 
 /**
  * Maybe
  */
-export const maybe: Alternative<Maybe<_>> &
-  Monad<Maybe<_>> &
-  Foldable<Maybe<_>> &
-  Traversable<Maybe<_>> = {
-  map,
+export const maybe: SL.Monad<Maybe<_>> &
+  SL.Alternative<Maybe<_>> &
+  SL.Foldable<Maybe<_>> &
+  SL.Traversable<Maybe<_>> = {
   ap,
+  map,
+  chain,
+  join,
   of,
   zero,
   alt,
-  chain,
-  join,
-  traverse,
   reduce,
+  traverse,
 };

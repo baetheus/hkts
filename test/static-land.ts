@@ -1,5 +1,6 @@
 import * as assert from "assert";
 import * as E from "../src/either";
+import { identity } from "../src/fns";
 import { _ } from "../src/hkts";
 import * as M from "../src/maybe";
 import * as S from "../src/static-land";
@@ -32,7 +33,8 @@ it("createChain", () => {
 it("createMonad", () => {
   const { join, map } = S.createMonad<M.Maybe<_>>({
     of: M.some,
-    chain: M.chain,
+    map: M.map,
+    join: M.join,
   });
 
   assert.deepStrictEqual(join(M.some(M.some(1))), M.some(1));
@@ -47,7 +49,8 @@ it("rightMonad", () => {
   // For some reason can't parameterize over a fixed type.
   const rightMonad = S.createMonad<E.Either<string, _>>({
     of: E.right,
-    chain: (f, either) => (either.tag === "Left" ? either : f(either.right)),
+    map: (fab, ta) => (E.isLeft(ta) ? ta : E.right(fab(ta.right))),
+    join: (tta) => E.fold(E.left, identity, tta),
   });
 
   const either = E.right(42);
