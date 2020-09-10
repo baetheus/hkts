@@ -1,6 +1,6 @@
-import { $, _ } from "./hkts";
-import { Maybe, maybe, some } from "./maybe";
-import { Apply } from "./static-land";
+import { $, _ } from "./hkts.ts";
+import { Maybe, maybe, some } from "./maybe.ts";
+import { Apply } from "./static-land.ts";
 
 function tuple<T extends ReadonlyArray<any>>(...t: T): T {
   return t;

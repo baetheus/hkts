@@ -1,6 +1,6 @@
-import { compose, identity } from "./fns";
-import { $, _ } from "./hkts";
-import * as SL from "./static-land";
+import { compose, identity } from "./fns.ts";
+import { $, _ } from "./hkts.ts";
+import * as SL from "./static-land.ts";
 
 /**
  * Types

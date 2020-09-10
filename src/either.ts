@@ -1,12 +1,12 @@
-import { $, _, _0, _1 } from "./hkts";
-import * as SL from "./static-land";
+import { _0, _1 } from "./hkts.ts";
+import * as SL from "./static-land.ts";
 
 /**
  * Types
  */
 export type Left<L> = { tag: "Left"; left: L };
 export type Right<R> = { tag: "Right"; right: R };
-export type Either<S extends [any, any]> = Left<S[0]> | Right<S[1]>;
+export type Either<L, R> = Left<L> | Right<R>;
 
 /**
  * Constructors
@@ -17,8 +17,8 @@ export const right = <R>(right: R): Right<R> => ({ tag: "Right", right });
 /**
  * Type Guards
  */
-export const isLeft = <L, R>(m: Either<[L, R]>): m is Left<L> => m.tag === "Left";
-export const isRight = <L, R>(m: Either<[L, R]>): m is Right<R> =>
+export const isLeft = <L, R>(m: Either<L, R>): m is Left<L> => m.tag === "Left";
+export const isRight = <L, R>(m: Either<L, R>): m is Right<R> =>
   m.tag === "Right";
 
 /**
@@ -27,7 +27,7 @@ export const isRight = <L, R>(m: Either<[L, R]>): m is Right<R> =>
 export const fold = <L, R, B>(
   onLeft: (left: L) => B,
   onRight: (right: R) => B,
-  ma: Either<[L, R]>
+  ma: Either<L, R>
 ): B => {
   switch (ma.tag) {
     case "Left":
@@ -38,13 +38,13 @@ export const fold = <L, R, B>(
 };
 
 /**
- * Mona
+ * Monad
  */
-export const { ap, map, chain, join, of } = SL.createMonad<Either<[_1, _0]>>({
-  of: <A>(a: A) => right(a),
-  map: (fab, ta) => (isRight(ta) ? right(fab(ta.right)) : ta),
-  join: (tta) => (isRight(tta) ? tta.right : tta),
-});
+// export const { ap, map, chain, join, of } = SL.createMonad<Either<_1, _0>>({
+//   of: <A>(a: A) => right(a),
+//   map: (fab, ta) => (isRight(ta) ? right(fab(ta.right)) : ta),
+//   join: (tta) => (isRight(tta) ? tta.right : tta),
+// });
 
 /**
  * Foldable
@@ -72,14 +72,14 @@ export const { ap, map, chain, join, of } = SL.createMonad<Either<[_1, _0]>>({
 /**
  * Maybe
  */
-export const maybe: SL.Monad<Either<[_1, _0]>> = {
-  map,
-  ap,
-  of,
-  // zero,
-  // alt,
-  chain,
-  join,
-  // traverse,
-  // reduce,
-};
+// export const maybe: SL.Monad<Either<[_1, _0]>> = {
+//   map,
+//   ap,
+//   of,
+//   zero,
+//   alt,
+//   chain,
+//   join,
+//   traverse,
+//   reduce,
+// };

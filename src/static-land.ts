@@ -1,62 +1,79 @@
-import { $ } from "./hkts";
+import { $ } from "./hkts.ts";
+
+/**
+ * Tuple length helper
+ */
+export type TupleN<N extends number> = N extends 1
+  ? { 0: any }
+  : N extends 2
+  ? { 0: any; 1: any }
+  : N extends 3
+  ? { 0: any; 1: any; 2: any }
+  : N extends 4
+  ? { 0: any; 1: any; 2: any; 3: any }
+  : N extends 5
+  ? { 0: any; 1: any; 2: any; 3: any; 4: any }
+  : N extends 6
+  ? { 0: any; 1: any; 2: any; 3: any; 4: any; 5: any }
+  : any[];
 
 /**
  * Alt
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#alt
  */
-export interface Alt<T> extends Functor<T> {
+export type Alt<T> = Functor<T> & {
   alt: <A>(ta: $<T, [A]>, tb: $<T, [A]>) => $<T, [A]>;
-}
+};
 
 /**
  * Alternative
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#alternative
  */
-export interface Alternative<T> extends Applicative<T>, Plus<T> {}
+export type Alternative<T> = Applicative<T> & Plus<T>;
 
 /**
  * Applicative
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#applicative
  */
-export interface Applicative<T> extends Apply<T> {
+export type Applicative<T> = Apply<T> & {
   of: <A>(a: A) => $<T, [A]>;
-}
+};
 
 /**
  * Apply
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#apply
  */
-export interface Apply<T> extends Functor<T> {
+export type Apply<T> = Functor<T> & {
   ap: <A, B>(tfab: $<T, [(a: A) => B]>, ta: $<T, [A]>) => $<T, [B]>;
-}
+};
 
 /**
  * Bifunctor
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#bifunctor
  */
-export interface Bifunctor<T> {
+export type Bifunctor<T> = {
   bimap: <A, B, C, D>(
     fab: (a: A) => B,
     fcd: (c: C) => D,
     tac: $<T, [A, C]>
   ) => $<T, [B, D]>;
-}
+};
 
 /**
  * Category
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#category
  */
-export interface Category<T> extends Semigroupoid<T> {
+export type Category<T> = Semigroupoid<T> & {
   id: <I, J>() => $<T, [I, J]>;
-}
+};
 
 /**
  * Chain
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#chain
  */
-export interface Chain<T> extends Apply<T> {
+export type Chain<T> = Apply<T> & {
   chain: <A, B>(fatb: (a: A) => $<T, [B]>, ta: $<T, [A]>) => $<T, [B]>;
-}
+};
 
 /**
  * ChainRec
@@ -64,60 +81,70 @@ export interface Chain<T> extends Apply<T> {
  *
  * @todo Confirm type
  */
-export interface ChainRec<T> extends Chain<T> {
+export type ChainRec<T> = Chain<T> & {
   chainRec: <A, B, C>(
     f: (next: (a: A) => C, done: (b: B) => C, a: A) => $<T, [C]>,
     a: A
   ) => $<T, [B]>;
-}
+};
 
 /**
  * Comonad
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#comonad
  */
-export interface Comonad<T> extends Extend<T> {
-  extract: <a>(ta: $<T, [a]>) => a;
-}
+export type Comonad<T> = Extend<T> & {
+  extract: <A>(ta: $<T, [A]>) => A;
+};
 
 /**
  * Contravariant
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#contravariant
  */
-export interface Contravariant<T> {
+export type Contravariant<T> = {
   contramap: <A, B>(fab: (a: A) => B, tb: $<T, [B]>) => $<T, [A]>;
-}
+};
 
 /**
  * Extend
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#extend
  */
-export interface Extend<T> extends Functor<T> {
+export type Extend<T> = Functor<T> & {
   extend: <A, B>(ftab: (t: $<T, [A]>) => B, ta: $<T, [A]>) => $<T, [B]>;
-}
+};
 
 /**
  * Filterable
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#filterable
  */
-export interface Filterable<T> {
+export type Filterable<T> = {
   filter: <A>(predicate: (x: A) => boolean, ta: $<T, [A]>) => $<T, [A]>;
-}
+};
 
 /**
  * Foldable
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#foldable
  */
-export interface Foldable<T> {
+export type Foldable<T> = {
   reduce: <A, B>(faba: (a: A, b: B) => A, a: A, tb: $<T, [B]>) => A;
-}
+};
 
 /**
  * Functor
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#functor
  */
-export interface Functor<T> {
+export type Functor<T> = {
   map: <A, B>(fab: (a: A) => B, ta: $<T, [A]>) => $<T, [B]>;
-}
+};
+
+/**
+ * Trial Functor for contructors * -> * -> * and greater.
+ */
+export type FunctorN<T, N extends number> = {
+  map: <R extends TupleN<N>, A, B>(
+    fab: (a: A) => B,
+    ta: $<T, [...R, A]>
+  ) => $<T, [...R, B]>;
+};
 
 /**
  * Group
