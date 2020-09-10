@@ -40,46 +40,38 @@ export const fold = <L, R, B>(
 /**
  * Monad
  */
-// export const { ap, map, chain, join, of } = SL.createMonad<Either<_1, _0>>({
-//   of: <A>(a: A) => right(a),
-//   map: (fab, ta) => (isRight(ta) ? right(fab(ta.right)) : ta),
-//   join: (tta) => (isRight(tta) ? tta.right : tta),
-// });
+export const { ap, map, chain, join, of } = SL.createMonad2<Either<_0, _1>>({
+  of: (a) => right(a),
+  map: (fab, ta) => (isRight(ta) ? right(fab(ta.right)) : ta),
+  join: (tta) => (isRight(tta) ? tta.right : tta),
+});
 
 /**
  * Foldable
  */
-// export const { reduce }: SL.Foldable<Either<[_1, _0]>> = {
-//   reduce: <A, B>(
-//     faba: (a: A, b: B) => A,
-//     a: A,
-//     tb: Either<[_1, B]>
-//   ): A => (isRight(tb) ? faba(a, tb.right) : a),
-// };
+export const { reduce }: SL.Foldable2<Either<_0, _1>> = {
+  reduce: (faba, a, tb) => (isRight(tb) ? faba(a, tb.right) : a),
+};
 
 /**
  * Traversable
  */
-// export const { traverse }: Pick<SL.Traversable<Either<[_1, _0]>>, "traverse"> = {
-//   traverse: <U, A, B>(
-//     F: SL.Applicative<U>,
-//     faub: (x: A) => $<U, [B]>,
-//     ta: Maybe<A>
-//   ): $<U, [Maybe<B>]> =>
-//     isNone(ta) ? F.of(none) : F.map(some, faub(ta.value)),
-// };
+export const { traverse }: Pick<SL.Traversable2<Either<_0, _1>>, "traverse"> = {
+  traverse: (F, faub, ta) =>
+    isLeft(ta) ? F.of(left(ta.left)) : F.map(right, faub(ta.right)),
+};
 
 /**
- * Maybe
+ * Either
  */
-// export const maybe: SL.Monad<Either<[_1, _0]>> = {
-//   map,
-//   ap,
-//   of,
-//   zero,
-//   alt,
-//   chain,
-//   join,
-//   traverse,
-//   reduce,
-// };
+export const either: SL.Monad2<Either<_0, _1>> &
+  SL.Foldable2<Either<_0, _1>> &
+  SL.Traversable2<Either<_0, _1>> = {
+  map,
+  ap,
+  of,
+  chain,
+  join,
+  traverse,
+  reduce,
+};

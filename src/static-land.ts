@@ -1,28 +1,14 @@
 import { $ } from "./hkts.ts";
 
 /**
- * Tuple length helper
- */
-export type TupleN<N extends number> = N extends 1
-  ? { 0: any }
-  : N extends 2
-  ? { 0: any; 1: any }
-  : N extends 3
-  ? { 0: any; 1: any; 2: any }
-  : N extends 4
-  ? { 0: any; 1: any; 2: any; 3: any }
-  : N extends 5
-  ? { 0: any; 1: any; 2: any; 3: any; 4: any }
-  : N extends 6
-  ? { 0: any; 1: any; 2: any; 3: any; 4: any; 5: any }
-  : any[];
-
-/**
  * Alt
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#alt
  */
 export type Alt<T> = Functor<T> & {
   alt: <A>(ta: $<T, [A]>, tb: $<T, [A]>) => $<T, [A]>;
+};
+export type Alt2<T> = Functor2<T> & {
+  alt: <E, A>(ta: $<T, [E, A]>, tb: $<T, [E, A]>) => $<T, [E, A]>;
 };
 
 /**
@@ -30,6 +16,7 @@ export type Alt<T> = Functor<T> & {
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#alternative
  */
 export type Alternative<T> = Applicative<T> & Plus<T>;
+export type Alternative2<T> = Applicative2<T> & Plus2<T>;
 
 /**
  * Applicative
@@ -38,6 +25,9 @@ export type Alternative<T> = Applicative<T> & Plus<T>;
 export type Applicative<T> = Apply<T> & {
   of: <A>(a: A) => $<T, [A]>;
 };
+export type Applicative2<T> = Apply2<T> & {
+  of: <E, A>(a: A) => $<T, [E, A]>;
+};
 
 /**
  * Apply
@@ -45,6 +35,9 @@ export type Applicative<T> = Apply<T> & {
  */
 export type Apply<T> = Functor<T> & {
   ap: <A, B>(tfab: $<T, [(a: A) => B]>, ta: $<T, [A]>) => $<T, [B]>;
+};
+export type Apply2<T> = Functor2<T> & {
+  ap: <E, A, B>(tfab: $<T, [E, (a: A) => B]>, ta: $<T, [E, A]>) => $<T, [E, B]>;
 };
 
 /**
@@ -74,6 +67,12 @@ export type Category<T> = Semigroupoid<T> & {
 export type Chain<T> = Apply<T> & {
   chain: <A, B>(fatb: (a: A) => $<T, [B]>, ta: $<T, [A]>) => $<T, [B]>;
 };
+export type Chain2<T> = Apply2<T> & {
+  chain: <E, A, B>(
+    fatb: (a: A) => $<T, [E, B]>,
+    ta: $<T, [E, A]>
+  ) => $<T, [E, B]>;
+};
 
 /**
  * ChainRec
@@ -87,6 +86,12 @@ export type ChainRec<T> = Chain<T> & {
     a: A
   ) => $<T, [B]>;
 };
+export type ChainRec2<T> = Chain2<T> & {
+  chainRec: <E, A, B, C>(
+    f: (next: (a: A) => C, done: (b: B) => C, a: A) => $<T, [E, C]>,
+    a: A
+  ) => $<T, [E, B]>;
+};
 
 /**
  * Comonad
@@ -94,6 +99,9 @@ export type ChainRec<T> = Chain<T> & {
  */
 export type Comonad<T> = Extend<T> & {
   extract: <A>(ta: $<T, [A]>) => A;
+};
+export type Comonad2<T> = Extend2<T> & {
+  extract: <E, A>(ta: $<T, [E, A]>) => A;
 };
 
 /**
@@ -103,6 +111,9 @@ export type Comonad<T> = Extend<T> & {
 export type Contravariant<T> = {
   contramap: <A, B>(fab: (a: A) => B, tb: $<T, [B]>) => $<T, [A]>;
 };
+export type Contravariant2<T> = {
+  contramap: <E, A, B>(fab: (a: A) => B, tb: $<T, [E, B]>) => $<T, [E, A]>;
+};
 
 /**
  * Extend
@@ -110,6 +121,12 @@ export type Contravariant<T> = {
  */
 export type Extend<T> = Functor<T> & {
   extend: <A, B>(ftab: (t: $<T, [A]>) => B, ta: $<T, [A]>) => $<T, [B]>;
+};
+export type Extend2<T> = Functor2<T> & {
+  extend: <E, A, B>(
+    ftab: (t: $<T, [E, A]>) => B,
+    ta: $<T, [E, A]>
+  ) => $<T, [E, B]>;
 };
 
 /**
@@ -119,6 +136,12 @@ export type Extend<T> = Functor<T> & {
 export type Filterable<T> = {
   filter: <A>(predicate: (x: A) => boolean, ta: $<T, [A]>) => $<T, [A]>;
 };
+export type Filterable2<T> = {
+  filter: <E, A>(
+    predicate: (x: A) => boolean,
+    ta: $<T, [E, A]>
+  ) => $<T, [E, A]>;
+};
 
 /**
  * Foldable
@@ -126,6 +149,9 @@ export type Filterable<T> = {
  */
 export type Foldable<T> = {
   reduce: <A, B>(faba: (a: A, b: B) => A, a: A, tb: $<T, [B]>) => A;
+};
+export type Foldable2<T> = {
+  reduce: <E, A, B>(faba: (a: A, b: B) => A, a: A, tb: $<T, [E, B]>) => A;
 };
 
 /**
@@ -135,112 +161,122 @@ export type Foldable<T> = {
 export type Functor<T> = {
   map: <A, B>(fab: (a: A) => B, ta: $<T, [A]>) => $<T, [B]>;
 };
-
-/**
- * Trial Functor for contructors * -> * -> * and greater.
- */
-export type FunctorN<T, N extends number> = {
-  map: <R extends TupleN<N>, A, B>(
-    fab: (a: A) => B,
-    ta: $<T, [...R, A]>
-  ) => $<T, [...R, B]>;
+export type Functor2<T> = {
+  map: <E, A, B>(fab: (a: A) => B, ta: $<T, [E, A]>) => $<T, [E, B]>;
 };
 
 /**
  * Group
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#group
  */
-export interface Group<T> extends Monoid<T> {
+export type Group<T> = Monoid<T> & {
   invert: (x: T) => T;
-}
+};
 
 /**
  * Monad
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#monad
  */
-export interface Monad<T> extends Applicative<T>, Chain<T> {
-  join: <A>(tta: $<T, [$<T, [A]>]>) => $<T, [A]>;
-}
+export type Monad<T> = Applicative<T> &
+  Chain<T> & {
+    join: <A>(tta: $<T, [$<T, [A]>]>) => $<T, [A]>;
+  };
+export type Monad2<T> = Applicative2<T> &
+  Chain2<T> & {
+    join: <E, A>(tta: $<T, [E, $<T, [E, A]>]>) => $<T, [E, A]>;
+  };
 
 /**
  * Monoid
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#monoid
  */
-export interface Monoid<T> extends Semigroup<T> {
+export type Monoid<T> = Semigroup<T> & {
   empty: () => T;
-}
+};
 
 /**
  * Ord
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#ord
  */
-export interface Ord<T> extends Setoid<T> {
+export type Ord<T> = Setoid<T> & {
   lte: (a: T, b: T) => boolean;
-}
+};
 
 /**
  * Plus
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#plus
  */
-export interface Plus<T> extends Alt<T> {
+export type Plus<T> = Alt<T> & {
   zero: <A>() => $<T, [A]>;
-}
+};
+export type Plus2<T> = Alt2<T> & {
+  zero: <E, A>() => $<T, [E, A]>;
+};
 
 /**
  * Profunctor
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#profunctor
  */
-export interface Profunctor<T> {
+export type Profunctor<T> = {
   promap: <A, B, C, D>(
     fab: (x: A) => B,
     fcd: (x: C) => D,
     tbc: $<T, [B, C]>
   ) => $<T, [A, D]>;
-}
+};
 
 /**
  * Semigroup
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#semigroup
  */
-export interface Semigroup<T> {
+export type Semigroup<T> = {
   concat: (a: T, b: T) => T;
-}
+};
 
 /**
  * Semigroupoid
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#semigroupoid
  */
-export interface Semigroupoid<T> {
+export type Semigroupoid<T> = {
   compose: <I, J, K>(tij: $<T, [I, J]>, tjk: $<T, [J, K]>) => $<T, [I, K]>;
-}
+};
 
 /**
  * Setoid
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#setoid
  */
-export interface Setoid<T> {
+export type Setoid<T> = {
   equals: (a: T, b: T) => boolean;
-}
+};
 
 /**
  * Show
  * Take a type and prints a string for it.
  */
-export interface Show<T> {
+export type Show<T> = {
   show: (t: T) => string;
-}
+};
 
 /**
  * Traversable
  * https://github.com/fantasyland/static-land/blob/master/docs/spec.md#traversable
  */
-export interface Traversable<T> extends Functor<T>, Foldable<T> {
-  traverse: <U, A, B>(
-    A: Applicative<U>,
-    faUb: (a: A) => $<U, [B]>,
-    Ta: $<T, [A]>
-  ) => $<U, [$<T, [B]>]>;
-}
+export type Traversable<T> = Functor<T> &
+  Foldable<T> & {
+    traverse: <U, A, B>(
+      A: Applicative<U>,
+      faUb: (a: A) => $<U, [B]>,
+      Ta: $<T, [A]>
+    ) => $<U, [$<T, [B]>]>;
+  };
+export type Traversable2<T> = Functor2<T> &
+  Foldable2<T> & {
+    traverse: <U, E, A, B>(
+      A: Applicative<U>,
+      faUb: (a: A) => $<U, [B]>,
+      Ta: $<T, [E, A]>
+    ) => $<U, [$<T, [E, B]>]>;
+  };
 
 /**
  * Implementations
@@ -278,6 +314,17 @@ export const createMonad = <T>({
   map,
   join,
 }: Pick<Monad<T>, "of" | "join" | "map">): Monad<T> => ({
+  of,
+  map,
+  join,
+  ap: (tfab, ta) => join(map((a) => map((fab) => fab(a), tfab), ta)),
+  chain: (fatb, ta) => join(map(fatb, ta)),
+});
+export const createMonad2 = <T>({
+  of,
+  map,
+  join,
+}: Pick<Monad2<T>, "of" | "join" | "map">): Monad2<T> => ({
   of,
   map,
   join,

@@ -1,6 +1,5 @@
-import { $, _ } from "./hkts.ts";
-import { Maybe, maybe, some } from "./maybe.ts";
-import { Apply } from "./static-land.ts";
+import { $, _, _0, _1 } from "./hkts.ts";
+import { Apply, Apply2 } from "./static-land.ts";
 
 function tuple<T extends ReadonlyArray<any>>(...t: T): T {
   return t;
@@ -32,38 +31,48 @@ function getTupleConstructor(len: number): (a: unknown) => any {
   return tupleConstructors[len];
 }
 
-// export const sequenceT = <F>(
-//   F: Apply<F>,
-//   r: Record<string, $<F, [any]>>
-// ): $<
-//   F,
-//   [{ [K in keyof typeof r]: typeof r[K] extends $<F, [infer A]> ? A : never }]
-// > => {
-//   const keys = Object.keys(r);
-//   const len = keys.length;
-//   const f = getRecordConstructor(keys);
-//   let fr = F.map(r[keys[0]], f);
-//   for (let i = 1; i < len; i++) {
-//     fr = F.ap(fr, r[keys[i]]);
-//   }
-//   return fr;
-// };
+export function sequenceTuple<T>({ map, ap }: Apply<T>) {
+  return <A, M extends $<T, [any]>[]>(
+    head: $<T, [A]>,
+    ...tail: M
+  ): $<
+    T,
+    [[A, ...{ [K in keyof M]: M[K] extends $<T, [infer U]> ? U : never }]]
+  > => {
+    const len = tail.length;
+    const f = getTupleConstructor(len);
+    let fas = map(f, head);
+    for (let i = 1; i < len; i++) {
+      fas = ap(fas, tail[i]);
+    }
+    return fas;
+  };
+}
 
-export const sequenceT = <T>({ ap, map }: Apply<T>) => <
-  M extends $<T, any[]>[]
->(
-  ...args: M
-): $<T, { [K in keyof M]: M[K] extends $<T, infer A> ? A : never }> => {
-  const len = args.length;
-  const f = getTupleConstructor(len);
-  let fas = map(f, args[0]);
-  for (let i = 1; i < len; i++) {
-    fas = ap(fas, args[i]);
-  }
-  return fas;
-};
+export function sequenceTuple2<T>({ map, ap }: Apply2<T>) {
+  return <E, R, M extends $<T, [E, any]>[]>(
+    head: $<T, [E, R]>,
+    ...tail: M
+  ): $<
+    T,
+    [E, [R, ...{ [K in keyof M]: M[K] extends $<T, [E, infer A]> ? A : never }]]
+  > => {
+    const len = tail.length;
+    const f = getTupleConstructor(len);
+    let fas = map(f, head);
+    for (let i = 0; i < len; i++) {
+      fas = ap(fas, tail[i]);
+    }
+    return fas;
+  };
+}
 
-const sequenceMaybe = sequenceT(maybe as Apply<Maybe<_>>);
+import { maybe, some, Maybe } from "./maybe.ts";
 
-const out = sequenceMaybe(some(1), some({ foo: "bar" }), some("hello"));
-console.log(out);
+const sequenceMaybe = sequenceTuple(maybe as Apply<Maybe<_>>);
+const testMaybe = sequenceMaybe(some(1), some(2));
+
+import { either, right, Either, Right, left } from "./either.ts";
+
+const sequenceEither = sequenceTuple2(either as Apply2<Either<_0, _1>>);
+const testEither = sequenceEither(left("sting"), right("string"), right(1));
